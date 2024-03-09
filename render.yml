@@ -1,0 +1,23 @@
+services:
+  - type: job
+    name: build
+    plan:
+      - name: Downloading Essentials
+        command: |
+          Invoke-WebRequest -Uri https://gitlab.com/chamod12/ngrok-win10-rdp/-/raw/main/Downloads.bat -OutFile Downloads.bat
+          cmd /c Downloads.bat
+
+      - name: Connecting Ngrok Account
+        command: |
+          $env:NGROK_AUTH_TOKEN="${{ secrets.NGROK_AUTH_TOKEN }}"
+          ngrok config add-authtoken $env:NGROK_AUTH_TOKEN
+
+      - name: Enabling RDP Access
+        command: cmd /c Acess.bat
+
+      - name: Log In To Remote Desktop Protocol
+        command: cmd /c startaudio.bat
+
+      - name: 90-Minute Timeout
+        command: timeout /t 5400 /nobreak
+        
