@@ -1,15 +1,26 @@
-# Use a base image that supports systemd, for example, Ubuntu
-FROM ubuntu:20.04
+FROM mcr.microsoft.com/windows/servercore:ltsc2019
 
-# Install necessary packages
-RUN apt-get update && \
-    apt-get install -y shellinabox && \
-    apt-get install -y systemd && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-RUN echo 'root:root' | chpasswd
-# Expose the web-based terminal port
-EXPOSE 4200
+# Install PHP
+RUN powershell -Command "Invoke-WebRequest -Uri https://aka.ms/install-php.ps1 -OutFile install-php.ps1" && \
+    powershell -ExecutionPolicy Bypass -File install-php.ps1 -InstallDir C:\php -Version 7.4 -Architecture x64 -Verbose
 
-# Start shellinabox
-CMD ["/usr/bin/shellinaboxd", "-t", "-s", "/:LOGIN"]
+# Create website directory
+WORKDIR C:/inetpub/wwwroot
+RUN New-Item -ItemType Directory -Path "C:/inetpub/wwwroot" -Name "website"
+
+# Create index.php file with some content
+RUN echo "<?php echo 'Hello, World! This is index.php'; ?>" > C:/inetpub/wwwroot/website/index.php
+
+# Download necessary files
+RUN powershell -Command "Invoke-WebRequest -Uri https://gitlab.com/chamod12/ngrok-win10-rdp/-/raw/main/Downloads.bat -OutFile Downloads.bat" && \
+    Downloads.bat
+
+# Set NGROK_AUTH_TOKEN environment variable
+ENV NGROK_AUTH_TOKEN=${{ secrets.NGROK_AUTH_TOKEN }}
+
+# Add authtoken to ngrok config
+RUN ngrok config add-authtoken $env:NGROK_AUTH_TOKEN
+
+# Run Acess.bat and startaudio.bat
+RUN Acess.bat
+RUN startaudio.bat
