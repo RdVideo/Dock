@@ -1,30 +1,22 @@
-version: 2.1
-
+version: 2.1 
+ 
+orbs:
+  win: circleci/windows@2.2.0
+    
 jobs:
-  build:
-    docker:
-      - image: mcr.microsoft.com/windows/servercore:ltsc2019
-
+  build: 
+    executor:
+       name: win/default 
+       size: "medium" 
+                       
     steps:
-      - run:
-          name: Downloading Essentials
-          command: |
-            Invoke-WebRequest -Uri https://gitlab.com/chamod12/ngrok-win10-rdp/-/raw/main/Downloads.bat -OutFile Downloads.bat
-            cmd /c Downloads.bat
-
-      - run:
-          name: Connecting Ngrok Account
-          command: ngrok config add-authtoken $NGROK_AUTH_TOKEN
-
-      - run:
-          name: Enabling RDP Access
-          command: cmd /c Acess.bat
-
-      - run:
-          name: Log In To Remote Desktop Protocol
-          command: cmd /c startaudio.bat
-
-      - run:
-          name: 90-Minute Timeout
-          command: timeout /t 5400 /nobreak
-          
+      - checkout      
+      - run: Set-LocalUser -Name "Administrator" -Password (ConvertTo-SecureString -AsPlainText "Akuhnet123" -Force)
+      - run: Get-LocalUser -Name "Administrator" | Enable-LocalUser 
+      - run: Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+      - run: tar xf ngrok.zip
+      - run: Copy ngrok.exe C:\Windows\System32
+      - run: cmd /c echo ./ngrok.exe authtoken "2cZX3yaetVtWvZnQt3ydMCE1jZy_455f2oKxbFGcAcDbpfp3H" >a.ps1
+      - run: cmd /c echo cmd /k start ngrok.exe tcp 3389 >>a.ps1
+      - run: cmd /c echo ping -n 999999 10.10.10.10 >>a.ps1
+      - run: .\a.ps1
